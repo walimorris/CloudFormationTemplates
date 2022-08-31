@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >-
+  AWS CloudFormation poc recommendation template
+  Create a Customer Managed IAM Policy and attach it to IAM users(s), groups(s) and(or) roles(s)
+
+Parameters: 
+  paramPath:
+    Description: IAM Path that you want to associate with the policy
+    Type: String
+    AllowedPattern: '(^\/$)|(^\/.*\/$)'
+    Default: '/'
+  paramGroups:
+    Description: 'Comma-delimtedlist of group names to attach the policy to (optional)'
+    Type: CommaDelimitedList
+    Default: 'developers,support'
+
+Conditions:
+  hasGroups: #check if any group was specified as an input parameter 
+    !Not [!Equals [ !Join ['', !Ref paramGroups], '' ] ]
+
+Resources: 
+  # PolicyDocument is the only required field in Properties
+  AmazonEC2RestrictedAccessPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: AmazonEC2RestrictedAccess # policy name
+      Description: Provides full access to CloudWatch, EC2 AutoScaling, ELB, ELB v2 with limited access to EC2 and IAM
+      Path: !Ref paramPath   
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Action: 'ec2:*'
+          Effect: Allow
+          Resource: '*'
+          Condition:
+            'ForAllValues:StringLike':
+             'ec2:InstanceType':
+                - t3.micro
+                - t3.medium
+        - Effect: Allow
+          Action: 'elasticloadbalancing:*'
+          Resource: '*'
+        - Effect: Allow
+          Action: 'cloudwatch:*'
+          Resource: '*'
+        - Effect: Allow
+          Action: 'autoscaling:*'
+          Resource: '*'
+        - Effect: Allow
+          Action: 'iam:CreateServiceLinkedRole'
+          Resource: '*'
+          Condition:
+            StringEquals:
+              'iam:AWSServiceName':
+                - autoscaling.amazonaws.com
+                - ec2scheduled.amazonaws.com
+                - elasticloadbalancing.amazonaws.com
+                - spot.amazonaws.com
+                - spotfleet.amazonaws.com
+                - transitgateway.amazonaws.com                        
+      Groups: !If [ hasGroups, !Ref paramGroups, !Ref "AWS::NoValue"]
+
+
+Outputs: 
+  outputName:
+    Description: Customer managed policy name
+    Value: !Ref AmazonEC2RestrictedAccessPolicy
