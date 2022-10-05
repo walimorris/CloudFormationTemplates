@@ -48,7 +48,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: target/lambda.zip
-      Role: !GetAtt ConvertRedactRole.Arn
+      Role: !GetAtt YourNamedRole.Arn
       Handler: com.example.xxx.YourNamedEvent::handleRequest
 
   S3Bucket:
