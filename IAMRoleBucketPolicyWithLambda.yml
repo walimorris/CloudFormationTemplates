@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Add your description here
+
+Parameters:
+  BucketName:
+    Description: S3 Bucket name
+    Type: String
+    Default: important-docs-stuff
+  RootRole:
+    Description: root role to apply policies
+    Type: String
+    Default: YourNamedRole
+
+Globals:
+  Function:
+    Runtime: java8
+    MemorySize: 512
+    Timeout: 300
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref BucketName
+
+Resources:
+  YourNamedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Description: Role to provide access to s3, cloudformation and basic lambda execution
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+      RoleName: !Ref RootRole
+
+  YourNamedEvent:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      Role: !GetAtt ConvertRedactRole.Arn
+      Handler: com.example.xxx.YourNamedEvent::handleRequest
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: BucketPermission
+    Description: Description for your bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt YourEventEvent.Arn
+
+  BucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref YourNamedEvent
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref "AWS::AccountId"
+      SourceArn: !Sub "arn:aws:s3:::${BucketName}"
