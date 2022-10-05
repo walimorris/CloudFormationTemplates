@@ -1,4 +1,4 @@
-# This CloudFormation template is a starting point to provide a Role, bucket, and Lambda function.
+# This CloudFormation template is a starting point to provide a Role and Lambda function.
 # It's best practice to provide least privilege across AWS account and resources within the cloud.
 # Ensure to provide security and access to resources in AWS based on more restrictive policies.
 
