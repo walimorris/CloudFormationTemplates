@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Monitored Instance Event template that uses EventBridge, CloudWatch and SNS to monitor EC2 instance
+
+Parameters:
+  RootRole:
+    Description: your role description
+    Type: String
+    Default: YourNamedRole
+
+Globals:
+  Function:
+    Runtime: java8
+    MemorySize: 512
+    Timeout: 25
+
+Resources:
+  YourNamedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Description: Role to provide access to s3, SNS, cloudwatch, ec2, EventBridge and basic lambda execution
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+      RoleName: !Ref RootRole
+
+  YourNamedEvent:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.zip
+      Role: !GetAtt YourNamedRole.Arn
+      Handler: org.example.xxx.YourNamedEvent::handleRequest
