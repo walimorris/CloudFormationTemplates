@@ -10,7 +10,7 @@ Parameters:
   BucketName:
     Description: S3 Bucket name
     Type: String
-    Default: important-docs-stuff
+    Default: exe-my-random-bucket
   RootRole:
     Description: root role to apply policies
     Type: String
